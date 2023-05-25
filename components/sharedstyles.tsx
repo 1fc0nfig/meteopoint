@@ -2,9 +2,10 @@ import styled from "styled-components";
 
 const Container = styled.div`
   padding: 0 0.5rem;
+  margin-top: 2.5rem;
   display: flex;
   flex-flow: column nowrap;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   height: 100vh;
   min-height: 100vh;
@@ -15,34 +16,42 @@ const Main = styled.main`
   flex: 1;
   display: flex;
   flex-flow: column nowrap;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   align-content: center;
 `
 
 const CardGrid = styled.div`
-  padding: 5rem 0;
+  margin: 5rem 0;
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 1rem 1rem;
   grid-template-areas: "left right";
   justify-items: stretch;
   align-items: stretch;
   align-content: center;
 
+  @media (max-width: ${({ theme }) => theme.breakpoints.lg}) {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    padding: 3rem 0;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: "left" "right";
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    padding: 1.5rem 0;
+    grid-template-columns: 2fr;
+    grid-area: center;
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.xs}) {
-    padding: 1rem 0;
+    grid-template-columns: 2fr;
+    grid-area: center;
   }
 `;
+
 
 const Title = styled.h1`
   margin: 0;

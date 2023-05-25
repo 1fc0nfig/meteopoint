@@ -15,6 +15,8 @@ const FlexContainer = styled.div`
 
   height: min-content;
 
+  aspect-ratio: 1/1;
+
   @media (max-width: 600px) {
     margin-top: 1.5rem;
   }
@@ -34,6 +36,7 @@ const Card = styled(Link)`
   transition: all 0.15s ease-in-out;
 
   width: 100%;
+  height: 100%;
 
   &:hover,
   :focus,

@@ -10,7 +10,7 @@ import {
 import Cards from '../components/cards'
 import { useEffect } from 'react';
 
-interface Location {
+export interface Location {
   coordinates: [number, number];
   description: string;
   type: string;
@@ -32,7 +32,7 @@ export interface Gateway {
   location: Location;
 }
 
-interface GatewayResponse {
+export interface GatewayResponse {
   status: string;
   message: string;
   data: {

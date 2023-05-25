@@ -99,18 +99,17 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
   return (
     <>
       <Head>
-        <title>Gateway Detail</title>
+        <title>{gateway.name}</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Navbar />
       <Container>
-        <Main>
-          <Title>Gateway Detail</Title>
-          <Description>
-            <CodeTag>Gateway</CodeTag> is a device that collects data from
-            sensors and sends it to the cloud.
-          </Description>
-        </Main>
+        <Title>{gateway.name}</Title>
+        <Description>
+          <CodeTag>Gateway</CodeTag> is a device that collects data from sensors
+          and sends it to the cloud.
+        </Description>
+        <Main></Main>
       </Container>
     </>
   );
@@ -123,7 +122,6 @@ export async function getServerSideProps({ query }) {
     const endTime = new Date(Date.now());
     const granularity = 5;
 
-    console.log(`https://meteopoint-be-1fc0nfig.vercel.app/api/gateway/${id}`);
     const gatewayResponse = await fetch(
       `https://meteopoint-be-1fc0nfig.vercel.app/api/gateway/${id}`
     );
@@ -134,12 +132,8 @@ export async function getServerSideProps({ query }) {
       `https://meteopoint-be-1fc0nfig.vercel.app/api/measurement?gateway=${id}&startTime=${startTime.toISOString()}&endTime=${endTime.toISOString()}&granularity=${granularity}`
     );
 
-    const measurementsData: MeasurementResponse =
-      await measurementResponse.json();
+    const measurementsData: MeasurementResponse = await measurementResponse.json();
     const measurements = measurementsData.data;
-
-    console.log(gateway);
-    console.log(measurements);
 
     return {
       props: {

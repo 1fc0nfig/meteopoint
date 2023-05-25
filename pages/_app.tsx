@@ -1,6 +1,8 @@
 import type { AppProps } from 'next/app'
 import { ThemeProvider, DefaultTheme } from 'styled-components'
 import GlobalStyle from '../components/globalstyles'
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Default theme properties defined in styled.d.ts
 const theme: DefaultTheme = {
@@ -25,6 +27,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <ThemeProvider theme={theme}>
         <GlobalStyle />
         <Component {...pageProps} />
+        <ToastContainer />
       </ThemeProvider>
     </>
   )
