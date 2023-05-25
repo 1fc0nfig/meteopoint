@@ -47,10 +47,6 @@ interface HomeProps {
 
 export default function Home({ gateways }: HomeProps) {
   
-  useEffect(() => {
-    console.log(gateways)
-  }, []
-  )
   return (
     <Container>
       <Head>

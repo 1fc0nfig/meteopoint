@@ -123,12 +123,17 @@ const GatewayForm = (props: GatewayFormProps) => {
   };
 
   useEffect(() => {
+
+    if (props.gateway) {
+      // For edit gateway purposes, we don't need to get the user's location
+      return;
+    }
+
     // Check if the browser supports geolocation
-    if ("geolocation" in navigator && props.gateway === undefined) {
+    if ("geolocation" in navigator) {
       navigator.permissions
         .query({ name: "geolocation" })
         .then(function (result) {
-          console.log(result);
           if (result.state === "granted") {
             // Permission has already been granted
             if (!toastDisplayed) {
@@ -176,7 +181,7 @@ const GatewayForm = (props: GatewayFormProps) => {
               type="number"
               id="latitude"
               name="latitude"
-              value={location ? location.coordinates[1] : ''}
+              defaultValue={location ? location.coordinates[1] : ''}
               onChange={(e) => {
                 // Handle the change event if necessary
               }}
@@ -185,21 +190,19 @@ const GatewayForm = (props: GatewayFormProps) => {
               type="number"
               id="longitude"
               name="longitude"
-              value={location ? location.coordinates[0] : ''}
+              defaultValue={location ? location.coordinates[0] : ''}
               onChange={(e) => {
                 // Handle the change event if necessary
               }}
             />
-            {/* <Button onClick={handlePermission}>
-              Request Location Permission
-            </Button> */}
           </Row>
           <Label htmlFor="location">Location description</Label>
           <Input
             type="text"
             id="location"
             name="location"
-            value={location ? location.description : ''}
+            defaultValue={location ? location.description : ''}
+            
           />
 
           <Label htmlFor="gmid">Serial number</Label>
