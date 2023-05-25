@@ -90,7 +90,8 @@ export interface GatewayFormProps {
 
 const GatewayForm = (props: GatewayFormProps) => {
   const [gateway, setGateway] = useState<Gateway | null>(props.gateway);
-  const [location, setLocation] = useState<Location | null>(null);
+  const [location, setLocation] = useState<Location | null>(props.gateway?.location);
+  let toastDisplayed = false;
 
   // Permission prompt will be displayed to the user
   // You can show a location permission request to the user
@@ -122,14 +123,18 @@ const GatewayForm = (props: GatewayFormProps) => {
   };
 
   useEffect(() => {
-    if ("geolocation" in navigator) {
+    // Check if the browser supports geolocation
+    if ("geolocation" in navigator && props.gateway === undefined) {
       navigator.permissions
         .query({ name: "geolocation" })
         .then(function (result) {
           console.log(result);
           if (result.state === "granted") {
             // Permission has already been granted
-            toast.info("Using current location.");
+            if (!toastDisplayed) {
+              toast.info("Using current location.");
+              toastDisplayed = true;
+            }
             navigator.geolocation.getCurrentPosition((position) => {
               setLocation({
                 coordinates: [
@@ -162,22 +167,28 @@ const GatewayForm = (props: GatewayFormProps) => {
       <Form onSubmit={(e) => props.onSubmit(e)}>
         <Column>
           <Label htmlFor="name">Name</Label>
-          <Input type="text" id="name" name="name" />
+          <Input type="text" id="name" name="name" defaultValue={gateway?.name || ''} />
           <Label htmlFor="serial">Description</Label>
-          <Input type="text" id="serial" name="description" />
+          <Input type="text" id="serial" name="description" defaultValue={gateway?.description || ''} />
           <Label>GPS - Latitude & Longitude</Label>
           <Row>
             <Input
               type="number"
               id="latitude"
               name="latitude"
-              value={location !== null ? location.coordinates[1] : ""}
+              value={location ? location.coordinates[1] : ''}
+              onChange={(e) => {
+                // Handle the change event if necessary
+              }}
             />
             <Input
               type="number"
               id="longitude"
               name="longitude"
-              value={location !== null ? location.coordinates[0] : ""}
+              value={location ? location.coordinates[0] : ''}
+              onChange={(e) => {
+                // Handle the change event if necessary
+              }}
             />
             {/* <Button onClick={handlePermission}>
               Request Location Permission
@@ -188,11 +199,11 @@ const GatewayForm = (props: GatewayFormProps) => {
             type="text"
             id="location"
             name="location"
-            value={location !== null ? location.description : ""}
+            value={location ? location.description : ''}
           />
 
           <Label htmlFor="gmid">Serial number</Label>
-          <Input type="text" id="gmid" name="gmid" />
+          <Input type="text" id="gmid" name="gmid" defaultValue={gateway?.gmid || ''} />
           <Divider />
           <Button type="submit">Submit</Button>
         </Column>
