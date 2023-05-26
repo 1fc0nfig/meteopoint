@@ -185,9 +185,17 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
     if (!chartDataLoading) {
       setChartDataLoading(true);
       try {
+        // Enable cors
         const response = await fetch(
-          `http://meteopoint-be-1fc0nfig.vercel.app/api/measurement?gateway=${gateway._id}&startTime=${startTime.toISOString()}&endTime=${endTime.toISOString()}&granularity=${granularity}`
+          `https://meteopoint-be-1fc0nfig.vercel.app/api/measurement?gateway=${gateway._id}&startTime=${startTime.toISOString()}&endTime=${endTime.toISOString()}&granularity=${granularity}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
         );
+
         const data: MeasurementResponse = await response.json();
         if (response.status === 200) {
           const displayData = processMeasurements(data.data.measurements as Measurement[])
