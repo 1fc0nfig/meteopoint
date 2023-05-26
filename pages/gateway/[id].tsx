@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
@@ -109,10 +109,18 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
     props.initialGranularity
   );
 
-  const granularities = [5, 10, 30, 60, 720, 1440, 10080];
+  const granularities = [5, 10, 30, 60, 720, 1440];
+  const maxChartDataSamples = 500;
 
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [chartDataLoading, setChartDataLoading] = useState<boolean>(true);
+
+  const dayMs = 24 * 60 * 60 * 1000;
+  const yearMs = 365 * dayMs;
+  const inputDebounce = 500;
+
+  const setNewEndTimeTimeout = useRef<NodeJS.Timeout | null>(null);
+  const setNewStartTimeTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (measurements) {
@@ -122,9 +130,9 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
     }
   }, []);
 
-  useEffect(() => {
-    fetchMeasurements();
-  }, [startTime, endTime, granularity]);
+  // useEffect(() => {
+  //   fetchMeasurements();
+  // }, [startTime, endTime, granularity]);
 
   const processMeasurements = (measurements: Measurement[]) => {
     console.log("processing measurements");
@@ -179,13 +187,13 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
       };
     });
 
-    console.log("measurements", measurements);
-    console.log("chartData", chartData);
-
-    if (nullCount > realCount) {
+    if (realCount === 0) {
+      toast.error("No measurements found in selected time range");
+    } else if (nullCount > realCount) {
       toast.warn("Most of the measurements are missing in selected time range");
     }
 
+    console.log("chartData", chartData);
     return chartData;
   };
 
@@ -267,6 +275,89 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
     }
   };
 
+  // Method to calculate the granularity based on the start and end time
+  const calculateGranularity = (start: Date, end: Date): number => {
+    const diffInMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
+
+    // return current granularity if that is ok
+    const sampleCount = diffInMinutes / granularity;
+    if (sampleCount <= maxChartDataSamples) {
+      return granularity;
+    }
+
+    // find the first granularity that results in less or equal than max samples
+    for (const granularity of granularities) {
+      const sampleCount = diffInMinutes / granularity;
+
+      if (sampleCount <= maxChartDataSamples) {
+        return granularity;
+      }
+    }
+
+    console.log("No granularity found");
+    // return the smallest granularity if none is found (this means there would be more than max samples)
+    return granularities[0];
+  };
+
+  // Method to set the new end time
+  const setNewEndTime = (newEndTime: Date) => {
+    if (setNewEndTimeTimeout.current)
+      clearTimeout(setNewEndTimeTimeout.current);
+    // Debouncing user input
+    setNewEndTimeTimeout.current = setTimeout(() => {
+      if (newEndTime.getTime() - startTime.getTime() > yearMs) {
+        newEndTime = new Date(startTime.getTime() + yearMs);
+      }
+
+      if (newEndTime.getTime() <= startTime.getTime()) {
+        const newStartTime = new Date(newEndTime.getTime() - dayMs);
+        setStartTime(newStartTime);
+      }
+
+      setEndTime(newEndTime);
+      const newGranularity = calculateGranularity(startTime, newEndTime);
+      setGranularity(newGranularity);
+    }, inputDebounce);
+  };
+
+  // Method to set the new start time
+  const setNewStartTime = (newStartTime: Date) => {
+    if (setNewStartTimeTimeout.current)
+      clearTimeout(setNewStartTimeTimeout.current);
+    // Debouncing user input
+    setNewStartTimeTimeout.current = setTimeout(() => {
+      if (endTime.getTime() - newStartTime.getTime() > yearMs) {
+        newStartTime = new Date(endTime.getTime() - yearMs);
+      }
+
+      if (newStartTime.getTime() >= endTime.getTime()) {
+        const newEndTime = new Date(newStartTime.getTime() + dayMs);
+        setEndTime(newEndTime);
+      }
+
+      setStartTime(newStartTime);
+      const newGranularity = calculateGranularity(newStartTime, endTime);
+      setGranularity(newGranularity);
+    }, inputDebounce);
+  };
+
+  const resetHandler = () => {
+    setStartTime(new Date(Date.now() - dayMs));
+    setEndTime(new Date());
+    setGranularity(granularities[0]);
+  };
+
+  useEffect(() => {
+    const newGranularity = calculateGranularity(startTime, endTime);
+    console.log("newGranularity", newGranularity);
+    setGranularity(newGranularity);
+    fetchMeasurements();
+  }, [granularity]);
+
+  useEffect(() => {
+    fetchMeasurements();
+  }, [startTime, endTime]);
+
   return (
     <>
       <Head>
@@ -312,9 +403,15 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
         {/* measurement controls */}
         <GraphControls>
           <Label>Start Time:</Label>
-          <DateTimePicker onChange={setStartTime} value={startTime} />
+          <DateTimePicker
+            onChange={(value) => setNewStartTime(value)}
+            value={startTime}
+          />
           <Label>End Time:</Label>
-          <DateTimePicker onChange={setEndTime} value={endTime} />
+          <DateTimePicker
+            onChange={(value) => setNewEndTime(value)}
+            value={endTime}
+          />
           <Label>Granularity:</Label>
           <Selector
             value={granularity}
@@ -326,6 +423,8 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
               </option>
             ))}
           </Selector>
+          {/* Reset button */}
+          <Button onClick={() => resetHandler()}>Reset</Button>
         </GraphControls>
 
         {/* Gateway Edit form */}
@@ -389,6 +488,17 @@ const GraphControls = styled.div`
   margin: 2rem 0;
   margin-bottom: 8rem;
 `;
+
+const Button = styled.button`
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: none;
+  background-color: #000;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+`;
+
 
 const Selector = styled.select``;
 
