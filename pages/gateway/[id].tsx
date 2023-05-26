@@ -91,6 +91,7 @@ interface ChartData {
   temperature: number;
   humidity: number;
   timestamp: string;
+  inactive?: number;
 }
 
 const GatewayDetailPage: NextPage<GatewayDetailProps> = (
@@ -100,9 +101,13 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
   const [measurements, setMeasurements] = useState<MeasurementData | null>(
     props.measurements
   );
-  const [startTime, setStartTime] = useState<Date>(new Date(props.initialStartTime));
+  const [startTime, setStartTime] = useState<Date>(
+    new Date(props.initialStartTime)
+  );
   const [endTime, setEndTime] = useState<Date>(new Date(props.initialEndTime));
-  const [granularity, setGranularity] = useState<number>(props.initialGranularity);
+  const [granularity, setGranularity] = useState<number>(
+    props.initialGranularity
+  );
 
   const granularities = [5, 10, 30, 60, 720, 1440, 10080];
 
@@ -123,7 +128,7 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
 
   const processMeasurements = (measurements: Measurement[]) => {
     console.log("processing measurements");
-  
+
     let chartMeasurements: Measurement[] = [];
     let currentTimestamp = new Date(startTime);
     while (currentTimestamp <= endTime) {
@@ -132,21 +137,25 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
         humidity: null,
         timestamp: new Date(currentTimestamp),
       });
-      currentTimestamp = new Date(currentTimestamp.getTime() + granularity * 60000);
+      currentTimestamp = new Date(
+        currentTimestamp.getTime() + granularity * 60000
+      );
     }
-  
+
     let nullCount = 0;
     let realCount = 0;
-  
+
     chartMeasurements = chartMeasurements.map((chartMeasurement) => {
       const matchingMeasurement = measurements.find((measurement) => {
         const measurementTimestamp = new Date(measurement.timestamp);
         return (
-          measurementTimestamp.getTime() >= chartMeasurement.timestamp.getTime() &&
-          measurementTimestamp.getTime() < chartMeasurement.timestamp.getTime() + granularity * 60000
+          measurementTimestamp.getTime() >=
+            chartMeasurement.timestamp.getTime() &&
+          measurementTimestamp.getTime() <
+            chartMeasurement.timestamp.getTime() + granularity * 60000
         );
       });
-      
+
       if (matchingMeasurement) {
         realCount++;
         // real Measurement
@@ -161,7 +170,7 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
         return chartMeasurement;
       }
     });
-  
+
     const chartData: ChartData[] = chartMeasurements.map((m) => {
       return {
         temperature: m.temperature,
@@ -169,16 +178,16 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
         timestamp: m.timestamp.toLocaleString(),
       };
     });
-  
+
     console.log("measurements", measurements);
     console.log("chartData", chartData);
-    
+
     if (nullCount > realCount) {
       toast.warn("Most of the measurements are missing in selected time range");
     }
-    
+
     return chartData;
-  }  
+  };
 
   const fetchMeasurements = async () => {
     console.log("fetching measurements");
@@ -187,7 +196,9 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
       try {
         // Enable cors
         const response = await fetch(
-          `https://meteopoint-be-1fc0nfig.vercel.app/api/measurement?gateway=${gateway._id}&startTime=${startTime.toISOString()}&endTime=${endTime.toISOString()}&granularity=${granularity}`,
+          `https://meteopoint-be-1fc0nfig.vercel.app/api/measurement?gateway=${
+            gateway._id
+          }&startTime=${startTime.toISOString()}&endTime=${endTime.toISOString()}&granularity=${granularity}`,
           {
             method: "GET",
             headers: {
@@ -198,7 +209,9 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
 
         const data: MeasurementResponse = await response.json();
         if (response.status === 200) {
-          const displayData = processMeasurements(data.data.measurements as Measurement[])
+          const displayData = processMeasurements(
+            data.data.measurements as Measurement[]
+          );
           if (displayData.length === 0) {
             toast.warning("No measurements found for specified time period.");
           } else {
@@ -342,7 +355,7 @@ export async function getServerSideProps({ query }) {
     );
 
     const measurementsData: MeasurementResponse =
-    await measurementResponse.json();
+      await measurementResponse.json();
     const measurements = measurementsData.data;
 
     return {
