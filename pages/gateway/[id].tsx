@@ -121,131 +121,64 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
     fetchMeasurements();
   }, [startTime, endTime, granularity]);
 
-  // const processMeasurements = (measurements: Measurement[]) => {
-  //   console.log("processing measurements");
-
-  //   // Create a new array of measurements with the timestamp quantized to the specified granularity and filled with null values
-  //   let chartMeasurements: Measurement[] = [];
-  //   let currentTimestamp = new Date(startTime);
-  //   while (currentTimestamp <= endTime) {
-  //     chartMeasurements.push({
-  //       temperature: null,
-  //       humidity: null,
-  //       timestamp: new Date(currentTimestamp),
-  //     });
-  //     currentTimestamp = new Date(currentTimestamp.getTime() + granularity * 60000);
-  //   }
-
-  //   //Quantize the timestamps of the actual measurements to the specified granularity
-  //   measurements.forEach((measurement) => {
-  //     const timestamp = new Date(measurement.timestamp);
-  //     const quantizedTimestamp = new Date(
-  //       timestamp.getFullYear(),
-  //       timestamp.getMonth(),
-  //       timestamp.getDate(),
-  //       timestamp.getHours(),
-  //       Math.floor(timestamp.getMinutes() / granularity) * granularity
-  //     );
-  //   });
-
-  //   // Fill in the actual measurements
-  //   for (let i = 0; i < measurements.length; i++) {
-  //     const measurement = measurements[i];
-  //     const timestamp = new Date(measurement.timestamp);
-
-  //     // Find the index of the measurement in the cleaned measurements array
-  //     const index = chartMeasurements.findIndex(
-  //       (m) => m.timestamp.getTime() === timestamp.getTime()
-  //     );
-
-  //     // If the measurement is found, replace the null values with the actual values
-  //     if (index !== -1) {
-  //       chartMeasurements[index] = {
-  //         temperature: measurement.temperature,
-  //         humidity: measurement.humidity,
-  //         timestamp: timestamp,
-  //       };
-  //     }
-  //   }
-
-  //   // Convert the measurements to the format required by the chart
-  //   const chartData: ChartData[] = chartMeasurements.map((m) => {
-  //     return {
-  //       temperature: m.temperature,
-  //       humidity: m.humidity,
-  //       timestamp: m.timestamp.toLocaleString(),
-  //     };
-  //   });
-
-  //   console.log("measurements", measurements);
-  //   console.log("chartData", chartData);
-  //   return chartData;
-  // }
-
   const processMeasurements = (measurements: Measurement[]) => {
     console.log("processing measurements");
-    console.log(measurements);
   
-    // First, sort the measurements by timestamp to ensure they are in chronological order
-    measurements.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-  
-    let processedMeasurements: Measurement[] = [];
-  
-    for (let i = 0; i < measurements.length; i++) {
-      const measurement = measurements[i];
-  
-      // Quantize the timestamp to fixed granularity
-      const timestamp = new Date(measurement.timestamp);
-      const quantizedTimestamp = new Date(
-        timestamp.getFullYear(),
-        timestamp.getMonth(),
-        timestamp.getDate(),
-        timestamp.getHours(),
-        Math.floor(timestamp.getMinutes() / granularity) * granularity
-      );
-  
-      // If this is not the first measurement, check whether there are "missed" measurements in between
-      // If so, add them with null values
-      if (i > 0) {
-        const previousMeasurement = processedMeasurements[processedMeasurements.length - 1];
-        const previousTimestamp = new Date(previousMeasurement.timestamp);
-        const diff = (quantizedTimestamp.getTime() - previousTimestamp.getTime()) / 1000;
-  
-        if (diff > granularity * 60) {
-          const numMissedMeasurements = Math.floor(diff / (granularity * 60));
-          for (let j = 0; j < numMissedMeasurements; j++) {
-            const missedTimestamp = new Date(
-              previousTimestamp.getTime() + (j + 1) * granularity * 60 * 1000
-            );
-            processedMeasurements.push({
-              temperature: null,
-              humidity: null,
-              timestamp: missedTimestamp,
-            });
-          }
-        }
-      }
-  
-      // Add the current measurement to the list of processed measurements
-      processedMeasurements.push({
-        temperature: measurement.temperature,
-        humidity: measurement.humidity,
-        timestamp: quantizedTimestamp,
+    let chartMeasurements: Measurement[] = [];
+    let currentTimestamp = new Date(startTime);
+    while (currentTimestamp <= endTime) {
+      chartMeasurements.push({
+        temperature: null,
+        humidity: null,
+        timestamp: new Date(currentTimestamp),
       });
+      currentTimestamp = new Date(currentTimestamp.getTime() + granularity * 60000);
     }
   
-    // Finally, convert the timestamps to strings
-    const chartData: ChartData[] = processedMeasurements.map((measurement) => {
+    let nullCount = 0;
+    let realCount = 0;
+  
+    chartMeasurements = chartMeasurements.map((chartMeasurement) => {
+      const matchingMeasurement = measurements.find((measurement) => {
+        const measurementTimestamp = new Date(measurement.timestamp);
+        return (
+          measurementTimestamp.getTime() >= chartMeasurement.timestamp.getTime() &&
+          measurementTimestamp.getTime() < chartMeasurement.timestamp.getTime() + granularity * 60000
+        );
+      });
+      
+      if (matchingMeasurement) {
+        realCount++;
+        // real Measurement
+        return {
+          temperature: matchingMeasurement.temperature,
+          humidity: matchingMeasurement.humidity,
+          timestamp: chartMeasurement.timestamp,
+        };
+      } else {
+        // null Measurement
+        nullCount++;
+        return chartMeasurement;
+      }
+    });
+  
+    const chartData: ChartData[] = chartMeasurements.map((m) => {
       return {
-        temperature: measurement.temperature,
-        humidity: measurement.humidity,
-        timestamp: measurement.timestamp.toLocaleString(),
+        temperature: m.temperature,
+        humidity: m.humidity,
+        timestamp: m.timestamp.toLocaleString(),
       };
     });
-
-    return chartData;
-  };
   
+    console.log("measurements", measurements);
+    console.log("chartData", chartData);
+    
+    if (nullCount > realCount) {
+      toast.warn("Most of the measurements are missing in selected time range");
+    }
+    
+    return chartData;
+  }  
 
   const fetchMeasurements = async () => {
     console.log("fetching measurements");
