@@ -45,7 +45,6 @@ const Card = styled(Link)`
     color: ${({ theme }) => theme.colors.secondary};
     border-color: ${({ theme }) => theme.colors.secondary};
     transform: scale(1.05);
-    
   }
 `
 
@@ -96,6 +95,13 @@ const Group = styled.div`
   align-items: center;
 `
 
+const GatewayStatus = styled.p`
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #666;
+`
+
 const StyledLink = ({ href, name }) => (
   <Link href={href} passHref legacyBehavior>
     <StyledA>{name}</StyledA>
@@ -103,29 +109,32 @@ const StyledLink = ({ href, name }) => (
 )
 
 export default function Cards({ gateway }: { gateway: Gateway }) {
-  
+
   return (
     <FlexContainer>
-      {gateway ? (<Card href={`/gateway/${gateway._id}`}>
-        <GatewayTitle>{gateway.name}</GatewayTitle>
-        <GatewayDescription>{gateway.description}</GatewayDescription>
-        <Row>
-          <Group>
-            <Text>20</Text>
-            <TbTemperatureCelsius size={30} />
-          </Group>
-          <Group>
-            <Text>50</Text>
-            <WiHumidity size={30}/>
-          </Group>
-        </Row>
-      </Card>) : (
+      {gateway ? (
+        <Card href={`/gateway/${gateway._id}`}>
+          <GatewayTitle>{gateway.name}</GatewayTitle>
+          <GatewayDescription>{gateway.description}</GatewayDescription>
+          <GatewayStatus>{gateway.status}</GatewayStatus>
+          <Row>
+            <Group>
+              <Text>{gateway.latest?.temperature}</Text>
+              <TbTemperatureCelsius size={30} />
+            </Group>
+            <Group>
+              <Text>{gateway.latest?.humidity}</Text>
+              <WiHumidity size={30} />
+            </Group>
+          </Row>
+        </Card>
+      ) : (
         // Add react icon
         <Card href={`/add-gateway`}>
           <GatewayTitle>Add Gateway</GatewayTitle>
           <IoAddCircleOutline size={50} />
         </Card>
-        )}
+      )}
     </FlexContainer>
   )
 }

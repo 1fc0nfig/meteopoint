@@ -86,11 +86,14 @@ const Divider = styled.hr`
 export interface GatewayFormProps {
   gateway?: Gateway;
   onSubmit?: (e: React.FormEvent<HTMLFormElement>) => void;
+  onDelete?: () => void;
 }
 
 const GatewayForm = (props: GatewayFormProps) => {
   const [gateway, setGateway] = useState<Gateway | null>(props.gateway);
-  const [location, setLocation] = useState<Location | null>(props.gateway?.location);
+  const [location, setLocation] = useState<Location | null>(
+    props.gateway?.location
+  );
   let toastDisplayed = false;
 
   // Permission prompt will be displayed to the user
@@ -123,7 +126,6 @@ const GatewayForm = (props: GatewayFormProps) => {
   };
 
   useEffect(() => {
-
     if (props.gateway) {
       // For edit gateway purposes, we don't need to get the user's location
       return;
@@ -172,16 +174,26 @@ const GatewayForm = (props: GatewayFormProps) => {
       <Form onSubmit={(e) => props.onSubmit(e)}>
         <Column>
           <Label htmlFor="name">Name</Label>
-          <Input type="text" id="name" name="name" defaultValue={gateway?.name || ''} />
+          <Input
+            type="text"
+            id="name"
+            name="name"
+            defaultValue={gateway?.name || ""}
+          />
           <Label htmlFor="serial">Description</Label>
-          <Input type="text" id="serial" name="description" defaultValue={gateway?.description || ''} />
+          <Input
+            type="text"
+            id="serial"
+            name="description"
+            defaultValue={gateway?.description || ""}
+          />
           <Label>GPS - Latitude & Longitude</Label>
           <Row>
             <Input
               type="number"
               id="latitude"
               name="latitude"
-              defaultValue={location ? location.coordinates[1] : ''}
+              defaultValue={location ? location.coordinates[1] : ""}
               onChange={(e) => {
                 // Handle the change event if necessary
               }}
@@ -190,7 +202,7 @@ const GatewayForm = (props: GatewayFormProps) => {
               type="number"
               id="longitude"
               name="longitude"
-              defaultValue={location ? location.coordinates[0] : ''}
+              defaultValue={location ? location.coordinates[0] : ""}
               onChange={(e) => {
                 // Handle the change event if necessary
               }}
@@ -201,14 +213,35 @@ const GatewayForm = (props: GatewayFormProps) => {
             type="text"
             id="location"
             name="location"
-            defaultValue={location ? location.description : ''}
-            
+            defaultValue={location ? location.description : ""}
           />
 
-          <Label htmlFor="gmid">Serial number</Label>
-          <Input type="text" id="gmid" name="gmid" defaultValue={gateway?.gmid || ''} />
+          {
+            // If the gateway is being edited, the serial number should not be editable
+            props.gateway ? (
+              <></>
+            ) : (
+              <>
+                <Label htmlFor="gmid">Serial number</Label>
+                <Input
+                  type="text"
+                  id="gmid"
+                  name="gmid"
+                  defaultValue={gateway?.gmid || ""}
+                />
+              </>
+            )
+          }
           <Divider />
           <Button type="submit">Submit</Button>
+          {/* Delete button */}
+          {props.gateway ? (
+            <Button type="button" onClick={props.onDelete}>
+              Delete
+            </Button>
+          ) : (
+            <></>
+          )}
         </Column>
       </Form>
     </>

@@ -17,6 +17,7 @@ import "react-calendar/dist/Calendar.css";
 import "react-clock/dist/Clock.css";
 
 import { toast } from "react-toastify";
+import router from "next/router";
 
 import {
   AreaChart,
@@ -32,7 +33,7 @@ import {
 import Navbar from "../../components/navbar";
 import GatewayForm from "../../components/gatewayform";
 
-interface GatewayResponse {
+export interface GatewayResponse {
   status: string;
   message: string;
   data: {
@@ -40,18 +41,18 @@ interface GatewayResponse {
   };
 }
 
-interface MeasurementResponse {
+export interface MeasurementResponse {
   status: string;
   message: string;
   data: MeasurementData;
 }
 
-interface MeasurementData {
+export interface MeasurementData {
   measurements: Measurement[];
   count: number;
 }
 
-interface Gateway {
+export interface Gateway {
   _id: string;
   gmid: string;
   name: string;
@@ -67,19 +68,19 @@ interface Gateway {
   __v: number;
 }
 
-interface Location {
+export interface Location {
   coordinates: [number, number];
   description: string;
   type: string;
 }
 
-interface Measurement {
+export interface Measurement {
   temperature: number;
   humidity: number;
   timestamp: Date;
 }
 
-interface GatewayDetailProps {
+export interface GatewayDetailProps {
   gateway: Gateway;
   measurements: MeasurementData;
   initialStartTime: string;
@@ -87,7 +88,7 @@ interface GatewayDetailProps {
   initialGranularity: number;
 }
 
-interface ChartData {
+export interface ChartData {
   temperature: number;
   humidity: number;
   timestamp: string;
@@ -204,7 +205,7 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
       try {
         // Enable cors
         const response = await fetch(
-          `https://meteopoint-be-1fc0nfig.vercel.app/api/measurement?gateway=${
+          `https://meteopoint-be.vercel.app/api/measurement?gateway=${
             gateway._id
           }&startTime=${startTime.toISOString()}&endTime=${endTime.toISOString()}&granularity=${granularity}`,
           {
@@ -274,6 +275,38 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
       toast.error(error.message);
     }
   };
+
+  const deleteHandler = async () => {
+    console.log("deleting gateway");
+    try {
+      const response = await fetch(
+        `https://meteopoint-be.vercel.app/api/gateway/${gateway._id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+
+          },
+        }
+      );
+
+      switch (response.status) {
+        case 200:
+          toast.success("Gateway deleted successfully");
+          router.push("/")
+          break;
+        case 400:
+          throw new Error("Bad request");
+        default:
+          throw new Error("Something went wrong");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(error.message);
+    }
+  };
+
+
 
   // Method to calculate the granularity based on the start and end time
   const calculateGranularity = (start: Date, end: Date): number => {
@@ -429,7 +462,7 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
 
         {/* Gateway Edit form */}
         <Title>Edit Gateway</Title>
-        <GatewayForm gateway={gateway} onSubmit={(e) => submitHandler} />
+        <GatewayForm gateway={gateway} onSubmit={(e) => submitHandler} onDelete={deleteHandler} />
         <Main></Main>
       </Container>
     </>
@@ -444,13 +477,13 @@ export async function getServerSideProps({ query }) {
     const granularity = 5;
 
     const gatewayResponse = await fetch(
-      `https://meteopoint-be-1fc0nfig.vercel.app/api/gateway/${id}`
+      `https://meteopoint-be.vercel.app/api/gateway/${id}`
     );
     const gatewayData: GatewayResponse = await gatewayResponse.json();
     const gateway = gatewayData.data;
 
     const measurementResponse = await fetch(
-      `https://meteopoint-be-1fc0nfig.vercel.app/api/measurement?gateway=${id}&startTime=${startTime.toISOString()}&endTime=${endTime.toISOString()}&granularity=${granularity}`
+      `https://meteopoint-be.vercel.app/api/measurement?gateway=${id}&startTime=${startTime.toISOString()}&endTime=${endTime.toISOString()}&granularity=${granularity}`
     );
 
     const measurementsData: MeasurementResponse =

@@ -3,12 +3,13 @@ import { Container, Main, Title } from "../components/sharedstyles";
 import GatewayForm from "../components/gatewayform";
 import Navbar from "../components/navbar";
 import { toast } from "react-toastify";
+import router from "next/router";
 
 export default function AddGateway() {
   const submitHandler = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-
+  
     const newGateway = {
       gmid: formData.get("gmid"),
       name: formData.get("name"),
@@ -18,30 +19,32 @@ export default function AddGateway() {
         description: formData.get("location"),
       },
     };
-
+  
     try {
-      const response = await fetch("http://localhost:3000/api/gateway", {
+      const response = await fetch("https://meteopoint-be.vercel.app/api/gateway/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(newGateway),
       });
-
-      switch (response.status) {
-        case 201:
-          toast.success("Gateway created successfully");
-          break;
-        case 400:
-          throw new Error("Bad request");
-        default:
-          throw new Error("Something went wrong");
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        toast.success("Gateway created successfully");
+        router.push("/");
+      } else if (response.status === 400) {
+        throw new Error(data.message);
+      } else {
+        throw new Error("Something went wrong");
       }
     } catch (error) {
       console.error(error);
       toast.error(error.message);
     }
   };
+  
 
   return (
     <>
