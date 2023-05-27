@@ -253,7 +253,7 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
     };
 
     try {
-      const response = await fetch("http://localhost:3000/api/gateway", {
+      const response = await fetch("https://meteopoint.vercel.app/api/gateway", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -263,7 +263,7 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
 
       switch (response.status) {
         case 201:
-          toast.success("Gateway created successfully");
+          toast.success("Gateway edited successfully");
           break;
         case 400:
           throw new Error("Bad request");
@@ -462,7 +462,7 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
 
         {/* Gateway Edit form */}
         <Title>Edit Gateway</Title>
-        <GatewayForm gateway={gateway} onSubmit={(e) => submitHandler} onDelete={deleteHandler} />
+        <GatewayForm gateway={gateway} onSubmit={(e) => submitHandler(e)} onDelete={deleteHandler} />
         <Main></Main>
       </Container>
     </>
