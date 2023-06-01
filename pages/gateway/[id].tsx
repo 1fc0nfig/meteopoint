@@ -16,6 +16,9 @@ import "react-datetime-picker/dist/DateTimePicker.css";
 import "react-calendar/dist/Calendar.css";
 import "react-clock/dist/Clock.css";
 
+import Flatpickr from "react-flatpickr";
+import "flatpickr/dist/themes/material_green.css";
+
 import { toast } from "react-toastify";
 import router from "next/router";
 
@@ -131,10 +134,6 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
     }
   }, []);
 
-  // useEffect(() => {
-  //   fetchMeasurements();
-  // }, [startTime, endTime, granularity]);
-
   const processMeasurements = (measurements: Measurement[]) => {
     console.log("processing measurements");
 
@@ -171,7 +170,7 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
         return {
           temperature: matchingMeasurement.temperature,
           humidity: matchingMeasurement.humidity,
-          timestamp: chartMeasurement.timestamp,
+          timestamp: chartMeasurement.timestamp
         };
       } else {
         // null Measurement
@@ -184,14 +183,17 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
       return {
         temperature: m.temperature,
         humidity: m.humidity,
-        timestamp: m.timestamp.toLocaleString(),
+        // timestamp without seconds
+        timestamp: m.timestamp.toLocaleString().slice(0, -3)
       };
     });
 
     if (realCount === 0) {
       toast.error("No measurements found in selected time range");
     } else if (nullCount > realCount) {
-      toast.warn("Most of the measurements are missing in selected time range");
+      setTimeout(() => {
+        toast.warn("Most of the measurements are missing in selected time range");
+      }, 10000);
     }
 
     console.log("chartData", chartData);
@@ -253,13 +255,16 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
     };
 
     try {
-      const response = await fetch("https://meteopoint.vercel.app/api/gateway", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newGateway),
-      });
+      const response = await fetch(
+        "https://meteopoint.vercel.app/api/gateway",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newGateway),
+        }
+      );
 
       switch (response.status) {
         case 201:
@@ -285,7 +290,6 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-
           },
         }
       );
@@ -293,7 +297,7 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
       switch (response.status) {
         case 200:
           toast.success("Gateway deleted successfully");
-          router.push("/")
+          router.push("/");
           break;
         case 400:
           throw new Error("Bad request");
@@ -305,8 +309,6 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
       toast.error(error.message);
     }
   };
-
-
 
   // Method to calculate the granularity based on the start and end time
   const calculateGranularity = (start: Date, end: Date): number => {
@@ -435,16 +437,26 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
 
         {/* measurement controls */}
         <GraphControls>
-          <Label>Start Time:</Label>
-          <DateTimePicker
-            onChange={(value) => setNewStartTime(value)}
-            value={startTime}
+          <StyledFlatpickr
+            onChange={
+              (date) => {
+                if (date.length === 2) {
+                  setNewStartTime(date[0]);
+                  setNewEndTime(date[1]);
+                }
+              }
+            }
+            value={[startTime, endTime]}
+            options={{
+              mode: 'range',
+              defaultDate: endTime,
+              maxDate: new Date(),
+              enableTime: true,
+              time_24hr: true,
+              dateFormat: 'Y-m-d H:i',
+            }}
           />
-          <Label>End Time:</Label>
-          <DateTimePicker
-            onChange={(value) => setNewEndTime(value)}
-            value={endTime}
-          />
+
           <Label>Granularity:</Label>
           <Selector
             value={granularity}
@@ -462,7 +474,11 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
 
         {/* Gateway Edit form */}
         <Title>Edit Gateway</Title>
-        <GatewayForm gateway={gateway} onSubmit={(e) => submitHandler(e)} onDelete={deleteHandler} />
+        <GatewayForm
+          gateway={gateway}
+          onSubmit={(e) => submitHandler(e)}
+          onDelete={deleteHandler}
+        />
         <Main></Main>
       </Container>
     </>
@@ -520,19 +536,40 @@ const GraphControls = styled.div`
   align-items: center;
   margin: 2rem 0;
   margin-bottom: 8rem;
+  width: 100%;
 `;
 
 const Button = styled.button`
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
-  border: none;
+  border: 1px solid #000;
   background-color: #000;
   color: #fff;
   font-size: 1rem;
   cursor: pointer;
 `;
 
+const Selector = styled.select`
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #000;
+  font-size: 1rem;
 
-const Selector = styled.select``;
+  &:focus {
+    outline: none;
+  }
+
+`;
+
+const StyledFlatpickr = styled(Flatpickr)`
+  width: 20rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #000;
+  font-size: 1rem;
+  margin-right: 1rem;
+  text-align: center;
+`;
+
 
 export default GatewayDetailPage;
