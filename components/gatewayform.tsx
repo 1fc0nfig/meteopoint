@@ -7,8 +7,17 @@ import Head from "next/head";
 import { Container, Main, CardGrid, Title, Description, CodeTag } from "../components/sharedstyles";
 import { Gateway, Location } from "../pages/index";
 import styled from "styled-components";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "react-toastify";
+
+interface Errors {
+    name?: string;
+    description?: string;
+    location?: {
+        coordinates: [string, string];
+        description: string;
+    };
+}
 
 const Form = styled.form`
     display: flex;
@@ -118,6 +127,20 @@ const Divider = styled.hr`
     border: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
+const FormErrors = styled.div`
+    font-size: 12px;
+    height: 32px;
+    /* margin-top: 4px; */
+    font-weight: 400;
+    /* display: flex; */
+    color: #eb0037;
+    /* text-align: center; */
+`;
+
+const FormErrorsDesc = styled.p`
+    margin-left: 4px;
+`;
+
 export interface GatewayFormProps {
     gateway?: Gateway;
     onSubmit?: (e: React.FormEvent<HTMLFormElement>) => void;
@@ -127,6 +150,71 @@ export interface GatewayFormProps {
 const GatewayForm = (props: GatewayFormProps) => {
     const [gateway, setGateway] = useState<Gateway | null>(props.gateway);
     const [location, setLocation] = useState<Location | null>(props.gateway?.location);
+
+    // Validation input
+    const initialValues = {
+        name: gateway?.name || "",
+        description: gateway?.description || "",
+        location: {
+            coordinates: [location ? location.coordinates[1] : "", location ? location.coordinates[0] : ""],
+            description: location ? location.description : "",
+        },
+    };
+    // const initialValues = {
+    //     name: "",
+    //     description: "",
+    //     location: {
+    //         coordinates: ["", ""],
+    //         description: "",
+    //     },
+    // };
+    const [formValues, setFormValues] = useState(initialValues);
+    const [formErrors, setFormErrors] = useState<Errors>({});
+    const [isSubmit, setIsSubmit] = useState(false);
+
+    const ref: any = useRef(null);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        // const { name, value } = ref.current;
+        console.log("name:", name);
+        console.log("value:", value);
+        setFormValues({ ...formValues, [name]: value });
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        setFormErrors(validate(formValues));
+        setIsSubmit(true);
+    };
+    useEffect(() => {
+        console.log(formErrors);
+        if (Object.keys(formErrors).length === 0 && isSubmit) {
+            console.log(formValues);
+        }
+    }, [formErrors]);
+    const validate = (values) => {
+        const errors: Errors = {};
+        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+        if (!values.name) {
+            errors.name = "Name is required!";
+        }
+        if (!values.description) {
+            errors.description = "Description is required!";
+        }
+        if (!values.location) {
+            errors.location.description = "Location description is required!";
+        }
+        // if (!values.GPS) {
+        //   errors.password = "Password is required";
+        // } else if (values.password.length < 4) {
+        //   errors.password = "Password must be more than 4 characters";
+        // } else if (values.password.length > 10) {
+        //   errors.password = "Password cannot exceed more than 10 characters";
+        // }
+        return errors;
+    };
+
     let toastDisplayed = false;
 
     // Permission prompt will be displayed to the user
@@ -190,40 +278,51 @@ const GatewayForm = (props: GatewayFormProps) => {
 
     return (
         <>
-            <Form onSubmit={(e) => props.onSubmit(e)}>
+            <Form
+                // onSubmit={(e) => props.handleSubmit(e)}
+                onSubmit={handleSubmit}
+            >
                 <Column>
                     <Label htmlFor="name">Name</Label>
-                    <Input type="text" id="name" name="name" defaultValue={gateway?.name || ""} />
+                    <Input type="text" id="name" name="name" value={formValues.name} onChange={handleChange} />
+                    {formErrors.name ? (
+                        <FormErrors>
+                            <FormErrorsDesc>{formErrors.name}</FormErrorsDesc>
+                        </FormErrors>
+                    ) : null}
                     <Label htmlFor="serial">Description</Label>
-                    <Input type="text" id="serial" name="description" defaultValue={gateway?.description || ""} />
+                    <Input
+                        type="text"
+                        id="serial"
+                        name="description"
+                        value={formValues.description}
+                        onChange={handleChange}
+                    />
+                    {formErrors.description ? (
+                        <FormErrors>
+                            <FormErrorsDesc>{formErrors.description}</FormErrorsDesc>
+                        </FormErrors>
+                    ) : null}
+
                     <Label>GPS - Latitude & Longitude</Label>
                     <Row>
                         <Input
                             type="number"
                             id="latitude"
                             name="latitude"
-                            defaultValue={location ? location.coordinates[1] : ""}
-                            onChange={(e) => {
-                                // Handle the change event if necessary
-                            }}
+                            value={formValues.location.coordinates[1]}
+                            onChange={handleChange}
                         />
                         <Input
                             type="number"
                             id="longitude"
                             name="longitude"
-                            defaultValue={location ? location.coordinates[0] : ""}
-                            onChange={(e) => {
-                                // Handle the change event if necessary
-                            }}
+                            value={formValues.location.coordinates[0]}
+                            onChange={handleChange}
                         />
                     </Row>
                     <Label htmlFor="location">Location description</Label>
-                    <Input
-                        type="text"
-                        id="location"
-                        name="location"
-                        defaultValue={location ? location.description : ""}
-                    />
+                    <Input type="text" id="location" name="location" value={formValues.location.description} />
 
                     {
                         // If the gateway is being edited, the serial number should not be editable
