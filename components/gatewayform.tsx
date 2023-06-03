@@ -92,7 +92,7 @@ const DeleteButton = styled.button`
     height: 2rem;
     margin: 1rem 0;
     padding: 0.5rem;
-    border: 1px solid ${({ theme }) => theme.colors.secondary};
+    border: 1px solid #f93f3f;
     border-radius: 10px;
     text-align: center;
     color: ${({ theme }) => theme.colors.background};
@@ -106,7 +106,7 @@ const DeleteButton = styled.button`
     :active {
         cursor: pointer;
         color: ${({ theme }) => theme.colors.background};
-        border-color: ${({ theme }) => theme.colors.secondary};
+        /* border-color: ${({ theme }) => theme.colors.secondary}; */
         transform: scale(1.1);
         background-color: #f86161;
     }
