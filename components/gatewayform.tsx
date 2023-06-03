@@ -11,11 +11,12 @@ import { useEffect, useState, useRef } from "react";
 import { toast } from "react-toastify";
 
 interface Errors {
+    gmid?: string | number;
     name?: string;
     description?: string;
     location?: {
-        coordinates: [string, string];
-        description: string;
+        coordinates?: [string, string];
+        description?: string;
     };
 }
 
@@ -153,6 +154,7 @@ const GatewayForm = (props: GatewayFormProps) => {
 
     // Validation input
     const initialValues = {
+        gmid: gateway?.gmid || "",
         name: gateway?.name || "",
         description: gateway?.description || "",
         location: {
@@ -160,14 +162,6 @@ const GatewayForm = (props: GatewayFormProps) => {
             description: location ? location.description : "",
         },
     };
-    // const initialValues = {
-    //     name: "",
-    //     description: "",
-    //     location: {
-    //         coordinates: ["", ""],
-    //         description: "",
-    //     },
-    // };
     const [formValues, setFormValues] = useState(initialValues);
     const [formErrors, setFormErrors] = useState<Errors>({});
     const [isSubmit, setIsSubmit] = useState(false);
@@ -176,9 +170,7 @@ const GatewayForm = (props: GatewayFormProps) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        // const { name, value } = ref.current;
-        console.log("name:", name);
-        console.log("value:", value);
+        console.log(name);
         setFormValues({ ...formValues, [name]: value });
     };
 
@@ -202,9 +194,9 @@ const GatewayForm = (props: GatewayFormProps) => {
         if (!values.description) {
             errors.description = "Description is required!";
         }
-        if (!values.location) {
-            errors.location.description = "Location description is required!";
-        }
+        // if (!values.location.description) {
+        //     errors.location.description = "Location description is required!";
+        // }
         // if (!values.GPS) {
         //   errors.password = "Password is required";
         // } else if (values.password.length < 4) {
@@ -313,6 +305,11 @@ const GatewayForm = (props: GatewayFormProps) => {
                             value={formValues.location.coordinates[1]}
                             onChange={handleChange}
                         />
+                        {formErrors.location?.coordinates[1] ? (
+                            <FormErrors>
+                                <FormErrorsDesc>{formErrors.location.coordinates[1]}</FormErrorsDesc>
+                            </FormErrors>
+                        ) : null}
                         <Input
                             type="number"
                             id="longitude"
@@ -320,10 +317,19 @@ const GatewayForm = (props: GatewayFormProps) => {
                             value={formValues.location.coordinates[0]}
                             onChange={handleChange}
                         />
+                        {formErrors.location?.coordinates[0] ? (
+                            <FormErrors>
+                                <FormErrorsDesc>{formErrors.location.coordinates[0]}</FormErrorsDesc>
+                            </FormErrors>
+                        ) : null}
                     </Row>
                     <Label htmlFor="location">Location description</Label>
                     <Input type="text" id="location" name="location" value={formValues.location.description} />
-
+                    {formErrors.location?.description ? (
+                        <FormErrors>
+                            <FormErrorsDesc>{formErrors.location.description}</FormErrorsDesc>
+                        </FormErrors>
+                    ) : null}
                     {
                         // If the gateway is being edited, the serial number should not be editable
                         props.gateway ? (
@@ -331,7 +337,7 @@ const GatewayForm = (props: GatewayFormProps) => {
                         ) : (
                             <>
                                 <Label htmlFor="gmid">Serial number</Label>
-                                <Input type="text" id="gmid" name="gmid" defaultValue={gateway?.gmid || ""} />
+                                <Input type="text" id="gmid" name="gmid" value={gateway?.gmid || ""} />
                             </>
                         )
                     }
