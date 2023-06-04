@@ -294,8 +294,8 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (props: GatewayDetailPro
         }
 
         console.log("No granularity found");
-        // return the smallest granularity if none is found (this means there would be more than max samples)
-        return granularities[0];
+        // largest granularity
+        return granularities[granularities.length - 1];
     };
 
     // Method to set the new end time
