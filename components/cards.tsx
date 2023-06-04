@@ -2,6 +2,8 @@ import styled from "styled-components";
 import Link from "next/link";
 import { Gateway } from "../pages/index";
 import { Title } from "./sharedstyles";
+import { useState } from "react";
+
 import { WiHumidity } from "react-icons/wi";
 import { TbTemperatureCelsius } from "react-icons/tb";
 import { IoAddCircleOutline } from "react-icons/io5";
@@ -24,7 +26,27 @@ const FlexContainer = styled.div`
     }
 `;
 
-const Card = styled(Link)`
+const Card = styled(Link)<{ status?: string }>`
+    ${(props) =>
+        props?.status === "inactive"
+            ? `
+
+            display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem;
+    color: #666;
+    text-decoration: none;
+    border: 1px solid black;
+    border-radius: 10px;
+    transition: all 0.15s ease-in-out;
+    background-color: #ffff;
+    width: 100%;
+    height: 100%;
+    cursor: auto    
+    `
+            : `
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -36,10 +58,8 @@ const Card = styled(Link)`
     border-radius: 10px;
     transition: all 0.15s ease-in-out;
     background-color: #ffff;
-
     width: 100%;
     height: 100%;
-
     &:hover,
     :focus,
     :active {
@@ -49,6 +69,7 @@ const Card = styled(Link)`
         transform: scale(1.05);
         /* background-color: #ffff; */
     }
+    `}
 `;
 
 const StyledA = styled.a`
@@ -119,15 +140,36 @@ const StyledLink = ({ href, name }) => (
     </Link>
 );
 
+// export const Switch = ({ isOn, handleToggle, onColor }) => {
+//     return (
+//         <>
+//             <input
+//                 checked={isOn}
+//                 onChange={handleToggle}
+//                 className="react-switch-checkbox"
+//                 id={`react-switch-new`}
+//                 type="checkbox"
+//             />
+//             <label style={{ background: isOn && onColor }} className="react-switch-label" htmlFor={`react-switch-new`}>
+//                 <span className={`react-switch-button`} />
+//             </label>
+//         </>
+//     );
+// };
+
+//   export default Switch;
+
 export default function Cards({ gateway }: { gateway: Gateway }) {
+    const [value, setValue] = useState(false);
     return (
         <FlexContainer>
             {gateway ? (
-                <Card href={`/gateway/${gateway._id}`}>
+                <Card status={gateway.status} href={`/gateway/${gateway._id}`}>
                     <GatewayTitle>{gateway.name}</GatewayTitle>
                     <GatewayDescriptionWrapper>
                         <GatewayDescription>{gateway.description}</GatewayDescription>
                         <GatewayStatus>{gateway.status}</GatewayStatus>
+                        {/* <Switch isOn={value} onColor="#EF476F" handleToggle={() => setValue(!value)} /> */}
                         <Row>
                             <Group>
                                 <Text>{gateway.latest?.temperature}</Text>

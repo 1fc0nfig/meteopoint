@@ -10,6 +10,8 @@ import styled from "styled-components";
 import { useEffect, useState, useRef } from "react";
 import { toast } from "react-toastify";
 
+const exceptThisSymbols = ["e", "E"];
+
 interface Errors {
     gmid?: string | number;
     name?: string;
@@ -18,6 +20,8 @@ interface Errors {
         coordinates?: [string, string];
         description?: string;
     };
+    locationDesc?: string;
+    locationCoor?: [string, string];
 }
 
 const Form = styled.form`
@@ -148,35 +152,79 @@ export interface GatewayFormProps {
     onDelete?: () => void;
 }
 
+interface InitialValues {
+    gmid: any;
+    name: any;
+    description: any;
+    location: {
+        coordinates: any[];
+        locationDesc: any;
+    };
+}
+
 const GatewayForm = (props: GatewayFormProps) => {
     const [gateway, setGateway] = useState<Gateway | null>(props.gateway);
     const [location, setLocation] = useState<Location | null>(props.gateway?.location);
 
     // Validation input
-    const initialValues = {
+    const initialValues: InitialValues = {
         gmid: gateway?.gmid || "",
         name: gateway?.name || "",
         description: gateway?.description || "",
         location: {
-            coordinates: [location ? location.coordinates[1] : "", location ? location.coordinates[0] : ""],
-            description: location ? location.description : "",
+            coordinates: [location ? location.coordinates[1] : 0, location ? location.coordinates[0] : 0],
+            locationDesc: location ? location.description : "",
         },
     };
     const [formValues, setFormValues] = useState(initialValues);
     const [formErrors, setFormErrors] = useState<Errors>({});
     const [isSubmit, setIsSubmit] = useState(false);
 
-    const ref: any = useRef(null);
-
     const handleChange = (e) => {
         const { name, value } = e.target;
-        console.log(name);
-        setFormValues({ ...formValues, [name]: value });
+        const checkKeyObj = formValues.hasOwnProperty(name);
+        console.log("name:", name);
+        console.log("value:", value);
+        if (checkKeyObj) {
+            setFormValues({
+                ...formValues,
+                [name]: value,
+            });
+        } else if (!checkKeyObj && name === "longitude") {
+            setFormValues({
+                ...formValues,
+
+                location: {
+                    ...formValues.location,
+                    // coordinates.map(coord => {
+                    //     if(coord.id === '')
+                    // })
+                    coordinates: [value, formValues.location.coordinates[1]],
+                },
+            });
+        } else if (!checkKeyObj && name === "latitude") {
+            setFormValues({
+                ...formValues,
+                location: {
+                    ...formValues.location,
+                    coordinates: [formValues.location.coordinates[0], value],
+                },
+            });
+        } else if (!checkKeyObj) {
+            setFormValues({
+                ...formValues,
+                location: {
+                    ...formValues.location,
+                    [name]: value,
+                },
+            });
+        }
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
         setFormErrors(validate(formValues));
+        console.log("formValues: ", formValues);
         setIsSubmit(true);
     };
     useEffect(() => {
@@ -187,16 +235,21 @@ const GatewayForm = (props: GatewayFormProps) => {
     }, [formErrors]);
     const validate = (values) => {
         const errors: Errors = {};
-        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+        // const regex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
         if (!values.name) {
             errors.name = "Name is required!";
         }
         if (!values.description) {
             errors.description = "Description is required!";
         }
-        // if (!values.location.description) {
-        //     errors.location.description = "Location description is required!";
-        // }
+        if (!values.location.locationDesc) {
+            console.log("locationDesc:", values.location.locationDesc);
+            errors.locationDesc = "Location description is required!";
+        }
+        if (!values.gmid) {
+            errors.gmid = "Gmid is required!";
+        }
+
         // if (!values.GPS) {
         //   errors.password = "Password is required";
         // } else if (values.password.length < 4) {
@@ -302,7 +355,8 @@ const GatewayForm = (props: GatewayFormProps) => {
                             type="number"
                             id="latitude"
                             name="latitude"
-                            value={formValues.location.coordinates[1]}
+                            value={formValues.location.coordinates ? formValues.location.coordinates[1] : ""}
+                            onKeyDown={(e) => exceptThisSymbols.includes(e.key) && e.preventDefault()}
                             onChange={handleChange}
                         />
                         {formErrors.location?.coordinates[1] ? (
@@ -314,7 +368,8 @@ const GatewayForm = (props: GatewayFormProps) => {
                             type="number"
                             id="longitude"
                             name="longitude"
-                            value={formValues.location.coordinates[0]}
+                            value={formValues.location.coordinates ? formValues.location?.coordinates[0] : ""}
+                            onKeyDown={(e) => exceptThisSymbols.includes(e.key) && e.preventDefault()}
                             onChange={handleChange}
                         />
                         {formErrors.location?.coordinates[0] ? (
@@ -324,10 +379,16 @@ const GatewayForm = (props: GatewayFormProps) => {
                         ) : null}
                     </Row>
                     <Label htmlFor="location">Location description</Label>
-                    <Input type="text" id="location" name="location" value={formValues.location.description} />
-                    {formErrors.location?.description ? (
+                    <Input
+                        type="text"
+                        id="locationDesc"
+                        name="locationDesc"
+                        value={formValues.location.locationDesc}
+                        onChange={handleChange}
+                    />
+                    {formErrors.locationDesc ? (
                         <FormErrors>
-                            <FormErrorsDesc>{formErrors.location.description}</FormErrorsDesc>
+                            <FormErrorsDesc>{formErrors.locationDesc}</FormErrorsDesc>
                         </FormErrors>
                     ) : null}
                     {
@@ -337,7 +398,18 @@ const GatewayForm = (props: GatewayFormProps) => {
                         ) : (
                             <>
                                 <Label htmlFor="gmid">Serial number</Label>
-                                <Input type="text" id="gmid" name="gmid" value={gateway?.gmid || ""} />
+                                <Input
+                                    type="text"
+                                    id="gmid"
+                                    name="gmid"
+                                    value={formValues?.gmid ? formValues?.gmid : ""}
+                                    onChange={handleChange}
+                                />
+                                {formErrors.gmid ? (
+                                    <FormErrors>
+                                        <FormErrorsDesc>{formErrors.gmid}</FormErrorsDesc>
+                                    </FormErrors>
+                                ) : null}
                             </>
                         )
                     }
