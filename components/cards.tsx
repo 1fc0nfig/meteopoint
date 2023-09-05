@@ -44,7 +44,15 @@ const Card = styled(Link)<{ status?: string }>`
     background-color: #ffff;
     width: 100%;
     height: 100%;
-    cursor: auto    
+    &:hover,
+    :focus,
+    :active {
+        cursor: pointer;
+        color: ${({ theme }) => theme.colors.secondary};
+        border-color: ${({ theme }) => theme.colors.secondary};
+        transform: scale(1.05);
+        /* background-color: #ffff; */
+    }  
     `
             : `
     display: flex;

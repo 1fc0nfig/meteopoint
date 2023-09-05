@@ -16,7 +16,7 @@ export default function AddGateway() {
       description: formData.get("description"),
       location: {
         coordinates: [formData.get("longitude"), formData.get("latitude")],
-        description: formData.get("location"),
+        description: formData.get("locationDesc"),
       },
     };
   
@@ -35,13 +35,13 @@ export default function AddGateway() {
         toast.success("Gateway created successfully");
         router.push("/");
       } else if (response.status === 400) {
-        throw new Error(data.message);
+        data.errors.forEach((error) => toast.error(error));
+        throw new Error(data);
       } else {
         throw new Error("Something went wrong");
       }
     } catch (error) {
-      console.error(error);
-      toast.error(error.message);
+      // ??
     }
   };
   
