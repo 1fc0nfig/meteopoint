@@ -19,6 +19,8 @@ export default function AddGateway() {
         description: formData.get("locationDesc"),
       },
     };
+
+    console.log(newGateway);
   
     try {
       const response = await fetch("https://meteopoint-be.vercel.app/api/gateway/register", {

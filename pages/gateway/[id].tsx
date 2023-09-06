@@ -39,9 +39,7 @@ import GatewayForm from "../../components/gatewayform";
 export interface GatewayResponse {
   status: string;
   message: string;
-  data: {
-    gateway: Gateway;
-  };
+  data: Gateway;
 }
 
 export interface MeasurementResponse {
@@ -119,7 +117,7 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
     { min: 30, hr: "30 minutes" },
     { min: 60, hr: "1 hour" },
     { min: 720, hr: "12 hours" },
-    { min: 1440, hr: "1 days" },
+    { min: 1440, hr: "1 day" },
   ];
 
   const maxChartDataSamples = 500;
@@ -143,8 +141,8 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
   }, []);
 
   const processMeasurements = (measurements: Measurement[]) => {
-    console.log("processing measurements");
-    console.log("granularity", granularity);
+    //console.log("processing measurements");
+    //console.log("granularity", granularity);
 
     let chartMeasurements: Measurement[] = [];
     let currentTimestamp = new Date(startTime);
@@ -207,13 +205,13 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
       }, 10000);
     }
 
-    console.log("chartData", chartData);
+    //console.log("chartData", chartData);
     return chartData;
   };
 
   const fetchMeasurements = async () => {
-    console.log("fetching measurements");
-    console.log("granularity", granularity);
+    //console.log("fetching measurements");
+    //console.log("granularity", granularity);
     if (!chartDataLoading) {
       setChartDataLoading(true);
       try {
@@ -263,13 +261,14 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
       location: {
         coordinates: [formData.get("longitude"), formData.get("latitude")],
         description: formData.get("locationDesc"),
+        type: "Point",
       },
     };
 
-    console.log(newGateway);
+    //console.log(newGateway);
 
     try {
-      console.log(gateway._id);
+      //console.log(gateway._id);
       const response = await fetch(
         `https://meteopoint-be.vercel.app/api/gateway/${gateway._id}`,
         {
@@ -282,10 +281,16 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
       );
 
       switch (response.status) {
-        case 201:
+        case 200:
           toast.success("Gateway edited successfully");
+          // parse response
+          const gatewayResponse: GatewayResponse = await response.json();
+          setGateway(gatewayResponse.data);
           break;
         case 400:
+          // Parse the errors as toast
+          // const data = await response.json();
+          // data.errors.forEach((error) => toast.error(error));
           throw new Error("Bad request");
         default:
           throw new Error("Something went wrong");
@@ -297,7 +302,7 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
   };
 
   const deleteHandler = async () => {
-    console.log("deleting gateway");
+    //console.log("deleting gateway");
     try {
       const response = await fetch(
         `https://meteopoint-be.vercel.app/api/gateway/${gateway._id}`,
@@ -336,7 +341,7 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
 
     while (granularityIndex < granularities.length) {
       if (diffInMinutes / newGranularity.min < maxChartDataSamples) {
-        // console.log("potencional new granularity", newGranularity);
+        // //console.log("potencional new granularity", newGranularity);
 
         if (newGranularity.min < granularity) {
           // continue searching
@@ -355,7 +360,6 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
   };
 
   const setNewGranularity = (newGranularity: number) => {
-
     const checkGranularity = calculateGranularity(
       startTime,
       endTime,
@@ -430,79 +434,85 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
       </Head>
       <Navbar />
       <Container>
-        <Title>{gateway.name}</Title>
-        {/* measurement plotting */}
-        <ResponsiveContainer width="100%" height={400}>
-          <AreaChart
-            width={500}
-            height={400}
-            data={chartData}
-            margin={{
-              top: 10,
-              right: 30,
-              left: 0,
-              bottom: 0,
-            }}
-          >
-            {/* <CartesianGrid strokeDasharray="3 3" /> */}
-            <XAxis dataKey="timestamp" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Area
-              type="monotone"
-              dataKey="temperature"
-              stroke="#8884d8"
-              fill="#8884d8"
-            />
-            <Area
-              type="monotone"
-              dataKey="humidity"
-              stroke="#82ca9d"
-              fill="#82ca9d"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        <GraphWrapper>
+          <Title>{gateway.name}</Title>
+          <Description>{gateway.description}</Description>
+          <Status>
+            Status: <CodeTag>{gateway.status}</CodeTag>
+          </Status>
 
-        {/* measurement controls */}
-        <GraphControls>
-          <StyledFlatpickr
-            onChange={(date) => {
-              if (date.length === 2) {
-                setNewTime(date);
-              }
-            }}
-            value={[startTime, endTime]}
-            options={{
-              mode: "range",
-              defaultDate: endTime,
-              maxDate: new Date(),
-              enableTime: true,
-              time_24hr: true,
-              dateFormat: "Y-m-d H:i",
-            }}
-          />
+          {/* measurement plotting */}
+          <ResponsiveContainer width="80%" height={400}>
+            <AreaChart
+              data={chartData}
+              margin={{
+                top: 10,
+                right: 30,
+                left: 0,
+                bottom: 0,
+              }}
+            >
+              {/* <CartesianGrid strokeDasharray="3 3" /> */}
+              <XAxis dataKey="timestamp" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Area
+                type="monotone"
+                dataKey="temperature"
+                stroke="#ff0000"
+                fill="#ff0000"
+              />
+              <Area
+                type="monotone"
+                dataKey="humidity"
+                stroke="#43bdff"
+                fill="#43bdff"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
 
-          <Label>Granularity:</Label>
-          <Selector
-            value={granularity}
-            onChange={(e) => setNewGranularity(parseInt(e.target.value))}
-          >
-            {granularities.map((granularity) => (
-              <option key={granularity.min} value={granularity.min}>
-                {granularity.hr}
-              </option>
-            ))}
-          </Selector>
-          {/* Reset button */}
-          <Button onClick={() => resetHandler()}>Reset</Button>
-        </GraphControls>
+          {/* measurement controls */}
+          <GraphControls>
+            <StyledFlatpickr
+              onChange={(date) => {
+                if (date.length === 2) {
+                  setNewTime(date);
+                }
+              }}
+              value={[startTime, endTime]}
+              options={{
+                mode: "range",
+                defaultDate: endTime,
+                maxDate: new Date(),
+                enableTime: true,
+                time_24hr: true,
+                dateFormat: "Y-m-d H:i",
+              }}
+            />
+
+            <Label>Granularity:</Label>
+            <Selector
+              value={granularity}
+              onChange={(e) => setNewGranularity(parseInt(e.target.value))}
+            >
+              {granularities.map((granularity) => (
+                <option key={granularity.min} value={granularity.min}>
+                  {granularity.hr}
+                </option>
+              ))}
+            </Selector>
+            {/* Reset button */}
+            <Button onClick={() => resetHandler()}>Reset</Button>
+          </GraphControls>
+        </GraphWrapper>
+        {/* </ResponsiveContainer> */}
 
         {/* Gateway Edit form */}
         <Title>Edit Gateway</Title>
         <GatewayForm
           gateway={gateway}
-          onSubmit={(e) => submitHandler(e)}
+          onSubmit={submitHandler}
           onDelete={deleteHandler}
         />
         <Main></Main>
@@ -542,7 +552,7 @@ export async function getServerSideProps({ query }) {
       },
     };
   } catch (error) {
-    console.log(error);
+    //console.log(error);
     return {
       props: {
         gateway: null,
@@ -564,6 +574,18 @@ const GraphControls = styled.div`
   margin: 2rem 0;
   margin-bottom: 8rem;
   width: 50%;
+`;
+
+const GraphWrapper = styled.div`
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const Status = styled.div`
+  margin: 1rem 0;
 `;
 
 const Button = styled.button`

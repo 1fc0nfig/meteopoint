@@ -261,14 +261,6 @@ const GatewayForm = (props: GatewayFormProps) => {
       errors.gmid = "Gmid is required!";
     }
 
-    // if (!values.GPS) {
-    //   errors.password = "Password is required";
-    // } else if (values.password.length < 4) {
-    //   errors.password = "Password must be more than 4 characters";
-    // } else if (values.password.length > 10) {
-    //   errors.password = "Password cannot exceed more than 10 characters";
-    // }
-
     return errors;
   };
 
@@ -450,7 +442,7 @@ const GatewayForm = (props: GatewayFormProps) => {
                 value={formValues?.gmid ? formValues?.gmid : ""}
                 onChange={handleChange}
                 // disable user input
-                disabled={props.gateway ? true : false}
+                readOnly={props.gateway ? true : false}
               />
               {formErrors.gmid ? (
                 <FormErrors>
