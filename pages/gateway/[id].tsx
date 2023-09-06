@@ -582,6 +582,9 @@ const GraphWrapper = styled.div`
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
+  @media (width < ${({ theme }) => theme.breakpoints.md}) {
+        min-height: auto;
+    }
 `;
 
 const Status = styled.div`
