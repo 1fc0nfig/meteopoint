@@ -135,11 +135,13 @@ const Group = styled.div`
     align-items: center;
 `;
 
-const GatewayStatus = styled.p`
+const GatewayStatus = styled.p<{ status?: string }>`
     margin: 0 0 1rem 0;
     font-size: 1rem;
     line-height: 1.5;
-    color: #666;
+    color: ${(props) => 
+        props.status === "active" ? "green" :
+        props.status === "inactive" ? "red" : "#666"};
 `;
 
 const StyledLink = ({ href, name }) => (
@@ -147,25 +149,6 @@ const StyledLink = ({ href, name }) => (
         <StyledA>{name}</StyledA>
     </Link>
 );
-
-// export const Switch = ({ isOn, handleToggle, onColor }) => {
-//     return (
-//         <>
-//             <input
-//                 checked={isOn}
-//                 onChange={handleToggle}
-//                 className="react-switch-checkbox"
-//                 id={`react-switch-new`}
-//                 type="checkbox"
-//             />
-//             <label style={{ background: isOn && onColor }} className="react-switch-label" htmlFor={`react-switch-new`}>
-//                 <span className={`react-switch-button`} />
-//             </label>
-//         </>
-//     );
-// };
-
-//   export default Switch;
 
 export default function Cards({ gateway }: { gateway: Gateway }) {
     const [value, setValue] = useState(false);
@@ -176,8 +159,7 @@ export default function Cards({ gateway }: { gateway: Gateway }) {
                     <GatewayTitle>{gateway.name}</GatewayTitle>
                     <GatewayDescriptionWrapper>
                         <GatewayDescription>{gateway.description}</GatewayDescription>
-                        <GatewayStatus>{gateway.status}</GatewayStatus>
-                        {/* <Switch isOn={value} onColor="#EF476F" handleToggle={() => setValue(!value)} /> */}
+                        <GatewayStatus status={gateway.status}>{gateway.status}</GatewayStatus>
                         <Row>
                             <Group>
                                 <Text>{gateway.latest?.temperature}</Text>
