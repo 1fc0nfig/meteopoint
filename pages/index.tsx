@@ -68,17 +68,23 @@ export default function Home({ gateways }: HomeProps) {
   useEffect(() => {
     const checkGatewayStatus = async () => {
       const currentTime = new Date();
-      const eightMinutesAgo = new Date(currentTime.getTime() - 8 * 60 * 1000);
+      const eightMinutesAgo = new Date(currentTime.getTime() - 10 * 60 * 1000);
 
       const updatedGateways: Gateway[] = gateways.map((gateway) => {
         if (
           gateway.latest &&
           new Date(gateway.latest.timestamp) < eightMinutesAgo
         ) {
-          console.log(`Gateway ${gateway.name} is inactive}`);
+          console.log(`Gateway ${gateway.name} is inactive ❌`);
           return {
             ...gateway,
             status: "inactive",
+          };
+        } else {
+          console.log(`Gateway ${gateway.name} is active ✅`);
+          return {
+            ...gateway,
+            status: "active",
           };
         }
         return gateway;

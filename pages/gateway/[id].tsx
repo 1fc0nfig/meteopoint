@@ -143,6 +143,7 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
   const processMeasurements = (measurements: Measurement[]) => {
     //console.log("processing measurements");
     //console.log("granularity", granularity);
+    console.log("measurements", measurements);
 
     let chartMeasurements: Measurement[] = [];
     let currentTimestamp = new Date(startTime);
@@ -196,7 +197,7 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
     });
 
     if (realCount === 0) {
-      // toast.error("No measurements found in selected time range");
+      toast.error("No measurements found in selected time range");
     } else if (nullCount > realCount) {
       setTimeout(() => {
         toast.warn(
@@ -205,7 +206,7 @@ const GatewayDetailPage: NextPage<GatewayDetailProps> = (
       }, 10000);
     }
 
-    //console.log("chartData", chartData);
+    console.log("chartData", chartData);
     return chartData;
   };
 
